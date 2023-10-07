@@ -1,0 +1,268 @@
+void interface_()
+{
+    Console.Clear();
+    Console.WriteLine("1. Вывод графа");
+    Console.WriteLine("2. Добавить вершину");
+    Console.WriteLine("3. Удалить вершину");
+    Console.WriteLine("4. Добавить ребро");
+    Console.WriteLine("5. Удалить ребро");
+    Console.WriteLine("6. Узнать вид графа");
+    Console.WriteLine("9. Выход из программы");
+}
+
+
+var gr = new Dictionary<int, Dictionary<int, int?>>();
+
+bool flag_spl = false;
+
+var path = @"D:\graf.csv"; /*@"D:\neorgraf.csv";*/ /*@"D:\graf3.csv";*/ /*@"D:\graf4.csv";*/   //@"D:\isp-41\graf.csv";
+StreamReader sr = new StreamReader(path);
+string line = sr.ReadLine();
+while (line != "")
+{
+    if (line == null) break;
+    int k;
+    var dict = new Dictionary<int, int?>();
+    string[] spl = line.Split(';');
+    k = Convert.ToInt32(spl[0]);
+    while (Convert.ToInt32(spl[0]) == k && line != null)
+    {
+        if (spl[1] == "")
+        {
+            flag_spl = true;
+            spl[1] = "0";
+        }
+        Console.WriteLine("spl[1] = " + spl[1]);
+        dict.Add(Convert.ToInt32(spl[1]), Convert.ToInt32(Convert.IsDBNull(spl[2])));
+        line = sr.ReadLine();
+        if (line != null) spl = line.Split(';');
+    }
+    gr.Add(k, dict);
+}
+sr.Close();
+Graf graf1 = new Graf(gr);
+graf1.checknull();
+
+Dictionary<int, int?> graff;
+bool flag_interface = true;
+do
+{
+    interface_();
+    int k;
+    int.TryParse(Console.ReadLine(), out k);
+    switch(k) 
+    {
+        case 1: 
+            graf1.Print();
+            break;
+        case 2:
+            Console.Write("Введите вершину: ");
+            graf1.add_node(Convert.ToInt32(Console.ReadLine()));
+            Console.WriteLine(".");
+            break;
+        case 3:
+            Console.Write("Введите вершину: ");
+            graf1.delete_node(Convert.ToInt32(Console.ReadLine()));
+            Console.WriteLine(".");
+            break;
+        case 4:
+            graff = new Dictionary<int, int?>();
+            Console.Write("Введите вершину: ");
+            int key = Convert.ToInt32(Console.ReadLine());
+            Console.WriteLine("Введите ребра: ");
+            int i;
+            string? num;
+            do
+            {
+                num = Console.ReadLine();
+                if (int.TryParse(num, out i)) { graff.Add(i, null); }
+                else if (num != "") Console.WriteLine("Ошибка 1");
+            } while (num != "");
+            graf1.add_edge(key, graff);
+            Console.WriteLine(".");
+            break;
+        case 5:
+            Console.Write("Введите вершину: ");
+            int left = Convert.ToInt32(Console.ReadLine());
+            Console.Write("Введите ребро: ");
+            int right = Convert.ToInt32(Console.ReadLine());
+            graf1.delete_edge(left, right);
+            Console.WriteLine(".");
+            break;
+        case 6:
+            graf1.orientation();
+            break;
+        case 9:
+            flag_interface = false;
+            break;
+        default: 
+            Console.WriteLine("Ошибка");
+            break;
+    }
+    if (flag_interface == true) Console.ReadLine();
+    else break;
+} while (flag_interface == true);
+
+
+
+class Graf
+{
+    Dictionary<int, Dictionary<int, int?>> adj;
+
+    public Graf() // конструктор по умолчанию
+    {
+        adj = new Dictionary<int, Dictionary<int, int?>>();
+    }
+    public Graf(Dictionary<int, Dictionary<int, int?>> adj) // конструктор
+    {
+        this.adj = adj;
+    }
+    public Graf(Graf graf) // копирующий конструктор
+    {
+        adj = new Dictionary<int, Dictionary<int, int?>>(graf.adj);
+        foreach(var i in adj.Keys)
+        {
+            adj[i] = new Dictionary<int, int?>(graf.adj[i]);
+        }
+    }
+
+
+    public void Print() // вывод смежности графов
+    {
+        foreach (int i in adj.Keys)
+        {
+            Console.Write("[" + i + "] ");
+            if (adj[i] != null)
+            {
+                foreach (int j in adj[i].Keys)
+                {
+                    Console.Write(j + " ");
+                }
+            }
+            Console.WriteLine();
+        }
+    }
+
+    public void add_node(int i) //добавление вершины
+    {
+        bool flag = true;
+        foreach(var j in adj.Keys)
+        {
+            if(j == i) 
+            { 
+                flag = false;
+                Console.WriteLine("Такая вершина уже существует");
+                break;
+            }
+            else if(i <= 0)
+            {
+                flag = false;
+                Console.WriteLine("Вершина не может быть нулем или отрицательным числом");
+                break;
+            }
+        }
+        if(flag == true) adj.Add(i, null);
+    }
+
+    public void delete_node(int i) //удаление вершины
+    {
+        if (adj.Remove(i) == true) adj.Remove(i);
+        else Console.WriteLine("Ошибка");
+    }
+
+    public void add_edge(int i, Dictionary<int, int?> j) // добавления ребра(дуги)
+    {
+        foreach(var key in j)
+        {
+            if (check_node(key.Key) == true && check_edge(key.Key, i) == true) adj[i].Add(key.Key, key.Value);
+            else
+            {
+                Console.WriteLine("Ошибка");
+                break;
+            }
+        }
+    }
+
+    public void delete_edge(int i, int j) // удаление ребра(дуги)
+    {
+        if (adj[i].Remove(j) == true) adj[i].Remove(j);
+        else Console.WriteLine("Ошибка");
+    }
+
+    public bool check_node(int i) // проверка на существование вершины для создания ребра
+    {
+        foreach(var key in adj.Keys)
+        {
+            if(key == i) return true;
+        }
+        return false;
+    }
+
+    public bool check_edge(int j, int i) // проверка на существование ребра
+    {
+        foreach(var key in adj[i].Keys)
+        {
+            if (key == j) return false;
+        }
+        return true;
+    }
+
+    public void orientation()
+    {
+        isolation();
+        int i = 0, j = 0;
+        foreach(var k in adj.Keys)
+        {
+            foreach(var key in adj[k].Keys)
+            {
+                j++;
+                if(adj.ContainsKey(key) == true)
+                {
+                    foreach(var key2 in adj[key].Keys)
+                    {
+                        if(k == key2)
+                        {
+                            i++;
+                        }
+                    }
+                }
+            }
+        }
+        if (i == j) Console.WriteLine("Граф неориентированный");
+        else Console.WriteLine("Граф ориентированный");
+    }
+
+    public bool isolation()
+    {
+        bool flag_iso = false;
+        Console.Write("Изолированные вершины: ");
+        foreach(var key in adj.Keys)
+        {
+            if (adj[key]  == null)
+            {
+                Console.Write(key + " ");
+                flag_iso = true;
+            }
+        }
+        if (flag_iso == true)
+        {
+            Console.WriteLine();
+            return true;
+        }
+        else
+        {
+            Console.WriteLine("нет");
+            return false;
+        }
+    }
+    public void checknull()
+    {
+        foreach(var key in adj.Keys)
+        {
+            foreach(var valkey in adj[key].Keys)
+            {
+                if (valkey == 0) delete_edge(key, valkey);
+            }
+        }
+    }
+};

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.IO;
 void interface_()
 {
@@ -36,7 +37,7 @@ Graf graf2 = new Graf(path3);
 graf1.checknull();
 graf2.checknull();
 
-Dictionary<int, int?> graff;
+
 bool flag_interface = true;
 do
 {
@@ -117,6 +118,11 @@ do
                     break;
             }
             break;
+        case 8:
+            Console.Clear();
+            graf1.Print();
+            graf1.SCC();
+            break;
         case 9:
             flag_interface = false;
             break;
@@ -150,7 +156,7 @@ class Graf
         StreamReader sr = new StreamReader(path);
         string line = sr.ReadLine();
         string[] spl = line.Split(';');
-        Orientation = Convert.ToBoolean(spl[0]); 
+        Orientation = Convert.ToBoolean(spl[0]);
         Weight = Convert.ToBoolean(spl[1]);
         line = sr.ReadLine();
         while (line != "")
@@ -293,7 +299,7 @@ class Graf
     {
         if (Orientation)
         {
-            if(Weight)
+            if (Weight)
             {
                 Console.Write("Введите вес ребра 1: ");
                 int w = int.Parse(Console.ReadLine());
@@ -320,7 +326,7 @@ class Graf
         }
         else
         {
-            if(Weight)
+            if (Weight)
             {
                 Console.Write("Введите вес ребра 1: ");
                 int w = int.Parse(Console.ReadLine());
@@ -399,7 +405,7 @@ class Graf
     static public Graf fullgraf(Graf graf) // полный граф
     {
         Graf graf2 = new Graf(graf);
-        if(graf.Weight)
+        if (graf.Weight)
         {
             foreach (var key in graf2.adj.Keys)
             {
@@ -470,7 +476,7 @@ class Graf
             return new Graf();
         }
         Graf graf3 = new Graf(graf1);
-        foreach(var key in graf2.adj.Keys)
+        foreach (var key in graf2.adj.Keys)
         {
             if (graf3.adj.ContainsKey(key))
             {
@@ -492,7 +498,7 @@ class Graf
             Console.WriteLine("Ошибка");
             return new Graf();
         }
-        foreach(var key2 in graf2.adj.Keys)
+        foreach (var key2 in graf2.adj.Keys)
         {
             graf3.adj.Add(key2, graf2.adj[key2]);
         }
@@ -518,5 +524,84 @@ class Graf
             }
         }
         return graf3;
+    }
+
+    private void SCCUtil(int u, int[] low, int[] disc,
+                 bool[] stackMember, Stack<int> st, int Time)
+    {
+
+        disc[u] = Time;
+        low[u] = Time;
+        Time += 1;
+        stackMember[u] = true;
+        st.Push(u);
+
+        int n;
+
+        foreach (int i in adj[u].Keys)
+        {
+            n = i;
+
+            if (disc[n] == -1)
+            {
+                SCCUtil(n, low, disc, stackMember, st, Time);
+
+                // Check if the subtree rooted with v
+                // has a connection to one of the
+                // ancestors of u
+                // Case 1 (per above discussion on
+                // Disc and Low value)
+                low[u] = Math.Min(low[u], low[n]);
+            }
+            else if (stackMember[n] == true)
+            {
+                // Update low value of 'u' only if 'v' is
+                // still in stack (i.e. it's a back edge,
+                // not cross edge).
+                // Case 2 (per above discussion on Disc
+                // and Low value)
+                low[u] = Math.Min(low[u], disc[n]);
+            }
+        }
+
+        // head node found, pop the stack and print an SCC
+        // To store stack extracted vertices
+        int w = -1;
+        if (low[u] == disc[u])
+        {
+            while (w != u)
+            {
+                w = st.Pop();
+                Console.Write(w + " ");
+                stackMember[w] = false;
+            }
+            Console.WriteLine();
+        }
+    }
+
+    // The function to do DFS traversal.
+    // It uses SCCUtil()
+    public void SCC()
+    {
+        int Time = 0;
+        int V = adj.Keys.Count;
+        // Mark all the vertices as not visited
+        // and Initialize parent and visited,
+        // and ap(articulation point) arrays
+        int[] disc = new int[V];
+        int[] low = new int[V];
+        for (int i = 0; i < V; i++)
+        {
+            disc[i] = -1;
+            low[i] = -1;
+        }
+
+        bool[] stackMember = new bool[V];
+        Stack<int> st = new Stack<int>();
+        // Call the recursive helper function
+        // to find strongly connected components
+        for (int i = 0; i < V; i++)
+            if (disc[i] == -1)
+                SCCUtil(i, low, disc, stackMember, st, Time);
     }
 };
